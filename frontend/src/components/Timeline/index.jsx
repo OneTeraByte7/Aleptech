@@ -371,6 +371,7 @@ export default function Timeline() {
                           containerWidth={INNER_W}
                           onClick={() => setSelectedFlight(f)}
                           conflict={conflictIds.has(f.id)}
+                          zoom={zoom}
                         />
                       </g>
                     ))}
