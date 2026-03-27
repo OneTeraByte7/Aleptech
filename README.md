@@ -1,3 +1,77 @@
+# Aleph Airport — Take-Home Exercise
+
+This repository contains a small full-stack project used for the Aleph "Full Stack Intern" take-home exercise. It includes a FastAPI backend (Task 1) and a React + Tailwind frontend (Tasks 2 & 3). Use the instructions below to run the app, run tests, and learn about design decisions.
+
+## Structure
+- `backend/` — FastAPI application, mock data, routes, and tests
+- `frontend/` — React app (Vite + Tailwind)
+
+## Quick start
+
+Prerequisites: Python 3.11+, Node.js 18+ (or compatible), npm
+
+1. Backend
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate    # Windows
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Health: http://127.0.0.1:8000/health
+
+2. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend is configured with a Vite proxy so requests from the browser to `/api/*` are forwarded to the backend on `127.0.0.1:8000`.
+
+3. Tests (backend)
+
+```bash
+cd backend
+pytest -q
+```
+
+## What I implemented
+
+- Task 1: Flight Schedule API (backend)
+  - Endpoints implemented in `backend/app/routes/*.py` (flights, stands)
+  - Pydantic models and validation in `backend/app/models.py`
+  - Mock data in `backend/app/data.py`
+  - Tests covering happy paths and error cases in `backend/tests/test_api.py`
+
+- Task 2: Stand Assignment Timeline (frontend)
+  - Timeline visualization in `frontend/src/components/Timeline/index.jsx`
+  - Uses an SVG timeline, hour grid, stand rows, and flight bars
+  - Click and hover scaffolding provided
+
+- Task 3: Operations Chat Interface (frontend)
+  - Chat UI in `frontend/src/components/Chat/index.jsx`
+  - Switched to a local simulated assistant (no external API key required)
+  - Streaming / typing simulation and UI states (sending, disabled input)
+
+## Design decisions & tradeoffs
+
+- The backend keeps a simple in-memory dataset for the exercise. This keeps the project self-contained and easy to run.
+- API responses use consistent shapes (`PaginatedFlights`, `Flight`, `StandWithOccupancy`) and proper HTTP status codes.
+- Frontend uses an SVG-based timeline for pixel-accurate positioning of flight blocks across a 24-hour axis.
+- Chat uses a local simulator to avoid external API keys in the repo; this can be swapped to a real LLM endpoint by replacing the fetch implementation in the chat component.
+
+## Next steps / optional improvements
+
+- Add persistent storage (SQLite/Postgres) and migrations
+- Add authentication and role-based actions
+- Add drag-and-drop reassign on the timeline with conflict detection
+- Add more tests for frontend components (Jest/React Testing Library)
+
+If you want me to run tests or start the frontend dev server in this environment, tell me and I'll run them and share the output.
 # Aleph · Airport Operations Platform
 
 A full-stack airport stand management system with a FastAPI backend and React + Vite frontend.
