@@ -127,6 +127,16 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 If you'd like, I can run the test suite or add a short README section describing the API schemas in detail.
 
+### Deployed backend
+
+The backend is deployed at: https://aleptech.onrender.com
+
+If you deploy the frontend to Vercel, set the following environment variable in the Vercel project settings so the app points to the deployed backend at runtime:
+
+- `VITE_API_BASE = https://aleptech.onrender.com`
+
+With that set, the frontend will call the deployed backend directly. For local development the app will still default to `'/api'` and use the Vite proxy configured in `frontend/vite.config.js`.
+
 ## Message to the Judges
 
 Dear Reviewers,
