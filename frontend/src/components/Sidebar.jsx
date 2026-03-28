@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, Clock, GitBranch, Settings } from 'lucide-react'
+import { LayoutGrid, Clock, GitBranch, Network, Settings } from 'lucide-react'
 
 const NAV = [
-  { to: '/',         icon: LayoutGrid, label: 'Dashboard' },
-  { to: '/timeline', icon: Clock,       label: 'Timeline'  },
-  { to: '/stands',   icon: GitBranch,   label: 'Stands'    },
+  { to: '/app',         icon: LayoutGrid, label: 'Dashboard' },
+  { to: '/app/timeline', icon: Clock,       label: 'Timeline'  },
+  { to: '/app/stands',   icon: GitBranch,   label: 'Stands'    },
+  { to: '/app/graph',    icon: Network,     label: 'Graph'     },
 ]
 
 export function Sidebar() {
@@ -45,7 +46,7 @@ export function Sidebar() {
         <NavLink
           key={to}
           to={to}
-          end={to === '/'}
+          end={to === '/app'}
           title={label}
           style={({ isActive }) => ({
             width: 36,
