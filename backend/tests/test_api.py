@@ -34,6 +34,12 @@ def test_health():
     assert resp.json()["status"] == "ok"
 
 
+def test_root():
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
+
+
 # ─── GET /flights ─────────────────────────────────────────────────────────────
 
 def test_list_flights_default_pagination():
@@ -46,6 +52,221 @@ def test_list_flights_default_pagination():
     assert pagination["per_page"] == 10
     assert pagination["page"] == 1
     assert pagination["total"] == 10  # We have exactly 10 flights
+
+
+def test_list_flights_filter_by_terminal():
+    resp = client.get("/flights?terminal=T1")
+    assert resp.status_code == 200
+    body = resp.json()
+    # All returned flights should be in T1
+    for flight in body["data"]:
+        assert flight["terminal"] == "T1"
+
+
+def test_list_flights_filter_by_status():
+    resp = client.get("/flights?status=delayed")
+    assert resp.status_code == 200
+    body = resp.json()
+    for flight in body["data"]:
+        assert flight["status"] == "delayed"
+
+
+def test_list_flights_invalid_status():
+    resp = client.get("/flights?status=invalid_status")
+    assert resp.status_code == 400
+    assert "Invalid status" in resp.json()["detail"]
+
+
+def test_list_flights_sort_by_flight_number():
+    resp = client.get("/flights?sort=flight_number&order=asc")
+    assert resp.status_code == 200
+    body = resp.json()
+    flight_numbers = [f["flight_number"] for f in body["data"]]
+    assert flight_numbers == sorted(flight_numbers)
+
+
+def test_list_flights_pagination():
+    resp = client.get("/flights?page=1&per_page=3")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["data"]) == 3
+    assert body["pagination"]["page"] == 1
+    assert body["pagination"]["per_page"] == 3
+
+
+# ─── GET /flights/{flight_id} ────────────────────────────────────────────────
+
+def test_get_flight_found():
+    resp = client.get("/flights/FL001")
+    assert resp.status_code == 200
+    flight = resp.json()
+    assert flight["id"] == "FL001"
+    assert flight["flight_number"] == "EK203"
+
+
+def test_get_flight_not_found():
+    resp = client.get("/flights/NONEXISTENT")
+    assert resp.status_code == 404
+    assert "Flight not found" in resp.json()["detail"]["error"]
+
+
+# ─── POST /flights/{flight_id}/reassign ─────────────────────────────────────
+
+def test_reassign_flight_success():
+    resp = client.post("/flights/FL001/reassign", json={"target_stand_id": "A1-04"})
+    assert resp.status_code == 200
+    flight = resp.json()
+    assert flight["assigned_stand"] == "A1-04"
+
+
+def test_reassign_flight_not_found():
+    resp = client.post("/flights/NONEXISTENT/reassign", json={"target_stand_id": "A1-04"})
+    assert resp.status_code == 404
+
+
+def test_reassign_flight_stand_not_found():
+    resp = client.post("/flights/FL001/reassign", json={"target_stand_id": "NONEXISTENT"})
+    assert resp.status_code == 404
+
+
+def test_reassign_flight_aircraft_incompatible():
+    # FL001 is A380 (size F), trying to assign to A1-04 (max size D)
+    resp = client.post("/flights/FL001/reassign", json={"target_stand_id": "A1-04"})
+    assert resp.status_code == 409
+    assert "Aircraft incompatible" in resp.json()["detail"]["error"]
+
+
+def test_reassign_flight_time_conflict():
+    # Try to assign FL003 (07:00-09:15) to A1-01 where FL001 (06:30-08:45) is already assigned
+    resp = client.post("/flights/FL003/reassign", json={"target_stand_id": "A1-01"})
+    assert resp.status_code == 409
+    assert "Stand occupied" in resp.json()["detail"]["error"]
+
+
+# ─── GET /stands ─────────────────────────────────────────────────────────────
+
+def test_list_stands():
+    resp = client.get("/stands")
+    assert resp.status_code == 200
+    stands = resp.json()
+    assert len(stands) == 10  # We have 10 stands
+    # Each stand should have occupancy info
+    for stand in stands:
+        assert "is_occupied" in stand
+        assert "current_flight" in stand
+
+
+def test_list_stands_filter_by_terminal():
+    resp = client.get("/stands?terminal=T1")
+    assert resp.status_code == 200
+    stands = resp.json()
+    for stand in stands:
+        assert stand["terminal"] == "T1"
+
+
+def test_list_stands_filter_by_type():
+    resp = client.get("/stands?type=contact")
+    assert resp.status_code == 200
+    stands = resp.json()
+    for stand in stands:
+        assert stand["type"] == "contact"
+
+
+def test_list_stands_invalid_type():
+    resp = client.get("/stands?type=invalid_type")
+    assert resp.status_code == 400
+    assert "Invalid type" in resp.json()["detail"]
+
+
+# ─── GET /stands/{stand_id}/schedule ────────────────────────────────────────
+
+def test_get_stand_schedule():
+    resp = client.get("/stands/A1-01/schedule")
+    assert resp.status_code == 200
+    flights = resp.json()
+    # All flights should be assigned to this stand
+    for flight in flights:
+        assert flight["assigned_stand"] == "A1-01"
+    # Should be sorted by block_time_start
+    if len(flights) > 1:
+        for i in range(len(flights) - 1):
+            assert flights[i]["block_time_start"] <= flights[i+1]["block_time_start"]
+
+
+def test_get_stand_schedule_not_found():
+    resp = client.get("/stands/NONEXISTENT/schedule")
+    assert resp.status_code == 404
+    assert "Stand not found" in resp.json()["detail"]["error"]
+
+
+# ─── GET /gates ──────────────────────────────────────────────────────────────
+
+def test_list_gates():
+    resp = client.get("/gates")
+    assert resp.status_code == 200
+    gates = resp.json()
+    assert len(gates) > 0
+    for gate in gates:
+        assert "id" in gate
+        assert "terminal" in gate
+        assert "connected_stands" in gate
+
+
+def test_get_gate():
+    resp = client.get("/gates/G01")
+    assert resp.status_code == 200
+    gate = resp.json()
+    assert gate["id"] == "G01"
+
+
+def test_get_gate_not_found():
+    resp = client.get("/gates/NONEXISTENT")
+    assert resp.status_code == 404
+
+
+# ─── Misc endpoints ──────────────────────────────────────────────────────────
+
+def test_get_graph_data():
+    resp = client.get("/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "plb_connections" in data
+    assert "walking_connections" in data
+    assert "adjacency_constraints" in data
+
+
+def test_get_dashboard_metrics():
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    metrics = resp.json()
+    assert "on_time_performance" in metrics
+    assert "stand_utilization" in metrics
+    assert "upcoming_arrivals_2h" in metrics
+    assert "plb_usage" in metrics
+
+
+def test_get_chat_history():
+    resp = client.get("/chat/history")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "messages" in data
+    assert "suggested_prompts" in data
+
+
+# ─── Input validation ────────────────────────────────────────────────────────
+
+def test_flights_per_page_limits():
+    resp = client.get("/flights?per_page=0")
+    assert resp.status_code == 422  # Pydantic validation error
+
+    resp = client.get("/flights?per_page=101")
+    assert resp.status_code == 422  # Exceeds max
+
+
+def test_flights_invalid_date_format():
+    resp = client.get("/flights?from=invalid-date")
+    assert resp.status_code == 400
+    assert "Invalid" in resp.json()["detail"]
 
 
 def test_list_flights_filter_by_terminal():
