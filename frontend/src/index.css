@@ -3,23 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --bg-base: #080c14;
-  --bg-surface: #0d1525;
-  --bg-raised: #111d30;
-  --bg-hover: #1a2b44;
-  --border: rgba(99, 179, 255, 0.08);
-  --border-bright: rgba(99, 179, 255, 0.18);
-  --text-primary: #e8f0ff;
-  --text-secondary: #7a98c4;
-  --text-muted: #3d5a80;
-  --accent: #38bdf8;
-  --accent-dim: rgba(56, 189, 248, 0.15);
-  --green: #4ade80;
-  --green-dim: rgba(74, 222, 128, 0.12);
-  --amber: #fbbf24;
-  --amber-dim: rgba(251, 191, 36, 0.12);
-  --rose: #fb7185;
-  --rose-dim: rgba(251, 113, 133, 0.12);
+  /* Theme colors will be set dynamically by ThemeContext */
   --radius: 6px;
   --radius-lg: 10px;
 }
@@ -33,7 +17,14 @@
 html, body, #root {
   height: 100%;
   width: 100%;
+}
+
+#root {
   overflow: hidden;
+}
+
+.landing-page {
+  overflow-y: auto;
 }
 
 body {
@@ -43,7 +34,26 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Smooth transitions for all theme changes */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Landing page specific styles */
+.landing-page {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Button hover effects */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Scrollbar styling */
 
 ::-webkit-scrollbar {
   width: 4px;
