@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.flights import router as flights_router
 from app.routes.stands import router as stands_router
+from app.routes.gates import router as gates_router
+from app.routes.misc import router as misc_router
 
 app = FastAPI(
     title="Aleph Airport Operations API",
@@ -21,6 +23,8 @@ app.add_middleware(
 
 app.include_router(flights_router)
 app.include_router(stands_router)
+app.include_router(gates_router)
+app.include_router(misc_router)
 
 
 @app.get("/", tags=["health"])
