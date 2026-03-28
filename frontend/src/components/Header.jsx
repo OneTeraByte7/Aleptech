@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Moon, Sun } from 'lucide-react'
+import { useTheme } from './ThemeContext'
 
 const PAGE_TITLES = {
-  '/':         { title: 'Dashboard',        subtitle: 'Live operations overview' },
-  '/timeline': { title: 'Stand Timeline',   subtitle: 'Block-time allocation view' },
-  '/stands':   { title: 'Stand Management', subtitle: 'Occupancy & scheduling' },
+  '/app':         { title: 'Dashboard',        subtitle: 'Live operations overview' },
+  '/app/timeline': { title: 'Stand Timeline',   subtitle: 'Block-time allocation view' },
+  '/app/stands':   { title: 'Stand Management', subtitle: 'Occupancy & scheduling' },
+  '/app/graph':    { title: 'Resource Graph',   subtitle: 'Network visualization' },
 }
 
 function UTCClock() {
@@ -27,6 +29,7 @@ function UTCClock() {
 
 export function Header({ onRefresh }) {
   const location = useLocation()
+  const { isDarkMode, toggleTheme } = useTheme()
   const meta = PAGE_TITLES[location.pathname] ?? { title: 'Aleph', subtitle: '' }
 
   return (
@@ -69,6 +72,29 @@ export function Header({ onRefresh }) {
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>LIVE</span>
       </div>
 
+      {/* Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          width: 28, height: 28, borderRadius: 6,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent', border: '1px solid var(--border)',
+          color: 'var(--text-muted)', cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = 'var(--bg-hover)'
+          e.target.style.color = 'var(--text)'
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'transparent'
+          e.target.style.color = 'var(--text-muted)'
+        }}
+        title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+      >
+        {isDarkMode ? <Sun size={13} /> : <Moon size={13} />}
+      </button>
+
       {onRefresh && (
         <button
           onClick={onRefresh}
@@ -78,6 +104,14 @@ export function Header({ onRefresh }) {
             background: 'transparent', border: '1px solid var(--border)',
             color: 'var(--text-muted)', cursor: 'pointer',
             transition: 'all 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'var(--bg-hover)'
+            e.target.style.color = 'var(--text)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent'
+            e.target.style.color = 'var(--text-muted)'
           }}
           title="Refresh data"
         >
