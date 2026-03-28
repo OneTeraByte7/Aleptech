@@ -278,3 +278,96 @@ STANDS = [
 
 # Aircraft size ordering for compatibility checks
 AIRCRAFT_SIZE_ORDER = ["A", "B", "C", "D", "E", "F"]
+
+GATES = [
+    {"id": "G01", "terminal": "T1", "type": "contact", "is_plb": True, "connected_stands": ["A1-01"]},
+    {"id": "G02", "terminal": "T1", "type": "contact", "is_plb": True, "connected_stands": ["A1-02"]},
+    {"id": "G03", "terminal": "T1", "type": "contact", "is_plb": True, "connected_stands": ["A1-03"]},
+    {"id": "G04", "terminal": "T1", "type": "contact", "is_plb": True, "connected_stands": ["A1-04"]},
+    {"id": "G05", "terminal": "T2", "type": "contact", "is_plb": True, "connected_stands": ["B1-01"]},
+    {"id": "G06", "terminal": "T2", "type": "contact", "is_plb": True, "connected_stands": ["B1-02"]},
+    {"id": "G07", "terminal": "T2", "type": "non_contact", "is_plb": False, "connected_stands": ["B1-03"]},
+]
+
+GRAPH_EDGES = {
+    "plb_connections": [
+        {"stand": "A1-01", "gate": "G01", "type": "plb"},
+        {"stand": "A1-02", "gate": "G02", "type": "plb"},
+        {"stand": "A1-03", "gate": "G03", "type": "plb"},
+        {"stand": "A1-04", "gate": "G04", "type": "plb"},
+        {"stand": "B1-01", "gate": "G05", "type": "plb"},
+        {"stand": "B1-02", "gate": "G06", "type": "plb"},
+    ],
+    "walking_connections": [
+        {"stand": "A1-04", "gate": "G03", "type": "walking", "distance_meters": 85},
+        {"stand": "B1-03", "gate": "G07", "type": "walking", "distance_meters": 120},
+        {"stand": "B1-04", "gate": "G07", "type": "bus", "distance_meters": 450},
+        {"stand": "B1-05", "gate": "G07", "type": "bus", "distance_meters": 520},
+    ],
+    "adjacency_constraints": [
+        {"stand_a": "A1-01", "stand_b": "A1-02", "type": "wingtip", "min_clearance_meters": 7.5},
+        {"stand_a": "A1-03", "stand_b": "A1-04", "type": "wingtip", "min_clearance_meters": 7.5},
+        {"stand_a": "B1-01", "stand_b": "B1-02", "type": "adjacency", "min_clearance_meters": 5.0},
+    ],
+}
+
+DASHBOARD_METRICS = {
+    "on_time_performance": {"current": 78, "previous": 82, "unit": "%"},
+    "stand_utilization": {"occupied": 7, "total": 10, "unit": "stands"},
+    "upcoming_arrivals_2h": {"total": 4, "on_time": 3, "delayed": 1},
+    "plb_usage": {"current": 71, "target": 85, "unit": "%"},
+}
+
+CHAT_HISTORY = {
+    "messages": [
+        {
+            "id": "msg-1",
+            "role": "user",
+            "content": "What's the current stand utilization for Terminal 1?",
+            "timestamp": "2025-01-15T08:05:00Z",
+        },
+        {
+            "id": "msg-2",
+            "role": "tool",
+            "tool_name": "fetch_stand_status",
+            "status": "complete",
+            "duration": "0.3s",
+            "content": "T1: 4/5 stands occupied (80%). A1-05 available (remote).",
+            "timestamp": "2025-01-15T08:05:01Z",
+        },
+        {
+            "id": "msg-3",
+            "role": "assistant",
+            "content": "Terminal 1 currently has 4 out of 5 stands occupied — that's 80% utilization. The only available stand is A1-05 (remote stand, no PLB). All contact stands with PLB are currently in use.",
+            "timestamp": "2025-01-15T08:05:02Z",
+        },
+        {
+            "id": "msg-4",
+            "role": "user",
+            "content": "QR501 is showing delayed. Can it still go to A1-01?",
+            "timestamp": "2025-01-15T08:20:00Z",
+        },
+        {
+            "id": "msg-5",
+            "role": "tool",
+            "tool_name": "check_assignment_feasibility",
+            "status": "complete",
+            "duration": "0.6s",
+            "content": "QR501 ETA revised to 10:40. A1-01 clear from 08:45. B777-300ER compatible with stand (size E ≤ F).",
+            "timestamp": "2025-01-15T08:20:01Z",
+        },
+        {
+            "id": "msg-6",
+            "role": "assistant",
+            "content": "Yes, QR501 can still use A1-01. Even with the 25-minute delay (revised ETA 10:40), there's a comfortable 1h 55min buffer after EK203 departs at 08:45. The B777-300ER is size category E, which fits within A1-01's maximum size F capacity.",
+            "timestamp": "2025-01-15T08:20:02Z",
+        },
+    ],
+    "suggested_prompts": [
+        "Show me all delayed flights",
+        "What's the current stand utilization?",
+        "Which flights arrive in the next hour?",
+        "Reassign EK512 to a PLB stand",
+        "Show T1 capacity forecast",
+    ],
+}
