@@ -5,6 +5,7 @@ from app.routes.flights import router as flights_router
 from app.routes.stands import router as stands_router
 from app.routes.gates import router as gates_router
 from app.routes.misc import router as misc_router
+from app.routes.metrics import router as metrics_router
 
 app = FastAPI(
     title="Aleph Airport Operations API",
@@ -25,6 +26,7 @@ app.include_router(flights_router)
 app.include_router(stands_router)
 app.include_router(gates_router)
 app.include_router(misc_router)
+app.include_router(metrics_router)
 
 
 @app.get("/", tags=["health"])
