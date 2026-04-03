@@ -49,6 +49,9 @@ export const getGraphData = () => request('/graph')
 // Metrics
 export const getMetrics = () => request('/metrics')
 
+// Flight Status Dashboard Metrics
+export const getFlightStatusMetrics = () => request('/metrics/flight-status')
+
 // Chat
 export const getChatHistory = () => request('/chat/history')
 
