@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-rou
 import { Sidebar }   from './components/Sidebar'
 import { Header }    from './components/Header'
 import Dashboard     from './components/Dashboard'
+import FlightStatusCards from './components/FlightStatusCards'
 import Timeline      from './components/Timeline'
 import StandsPage    from './components/Stands'
 import GraphPage     from './components/Graph'
@@ -55,6 +56,7 @@ export default function App() {
         element: <AppLayout />,
         children: [
           { index: true, element: <Dashboard /> },
+          { path: 'metrics', element: <FlightStatusCards /> },
           { path: 'timeline', element: <Timeline /> },
           { path: 'stands', element: <StandsPage /> },
           { path: 'graph', element: <GraphPage /> },
@@ -72,6 +74,10 @@ export default function App() {
       {
         path: '/graph',
         element: <Navigate to="/app/graph" replace />
+      },
+      {
+        path: '/metrics',
+        element: <Navigate to="/app/metrics" replace />
       },
       // Catch-all redirect
       {
