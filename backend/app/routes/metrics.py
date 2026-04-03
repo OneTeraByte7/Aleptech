@@ -38,33 +38,23 @@ def is_stand_occupied(stand_id: str, current_time: datetime) -> bool:
 
 def calculate_on_time_performance() -> OnTimePerformanceMetric:
     """Calculate on-time performance percentage with trend."""
-    current_time = get_current_time()
-    
-    # Get completed flights (where block_time_end < current_time)
-    completed_flights = [
-        f for f in FLIGHTS 
-        if parse_dt(f["block_time_end"]) < current_time
-    ]
-    
-    if not completed_flights:
-        # If no completed flights, use scheduled flights as proxy
-        completed_flights = FLIGHTS[:max(1, len(FLIGHTS) // 2)]
-    
-    total_flights = len(completed_flights)
-    on_time_flights = len([f for f in completed_flights if f["status"] == "on_time"])
+    # Use a sample of flights for current period
+    current_flights = FLIGHTS[:8]  # Take first 8 flights as current sample
+    total_flights = len(current_flights)
+    on_time_flights = len([f for f in current_flights if f["status"] == "on_time"])
     
     current_percentage = (on_time_flights / total_flights * 100) if total_flights > 0 else 0.0
     
-    # Calculate previous performance (simulated - using different sample)
-    prev_sample = FLIGHTS[max(1, len(FLIGHTS) // 3):]
-    prev_total = len(prev_sample)
-    prev_on_time = len([f for f in prev_sample if f["status"] == "on_time"])
+    # Calculate previous performance using different sample
+    prev_flights = FLIGHTS[2:10] if len(FLIGHTS) >= 10 else FLIGHTS[1:]
+    prev_total = len(prev_flights)
+    prev_on_time = len([f for f in prev_flights if f["status"] == "on_time"])
     previous_percentage = (prev_on_time / prev_total * 100) if prev_total > 0 else 0.0
     
     # Determine trend
-    if current_percentage > previous_percentage + 2:
+    if current_percentage > previous_percentage + 5:
         trend = "up"
-    elif current_percentage < previous_percentage - 2:
+    elif current_percentage < previous_percentage - 5:
         trend = "down"
     else:
         trend = "stable"
