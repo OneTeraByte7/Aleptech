@@ -116,8 +116,45 @@ class MetricValue(BaseModel):
     unit: str
 
 
+class OnTimePerformanceMetric(BaseModel):
+    current: float
+    previous: Optional[float] = None
+    trend: str  # "up", "down", "stable"
+    unit: str = "%"
+
+
+class StandUtilizationMetric(BaseModel):
+    occupied: int
+    total: int
+    percentage: float
+    unit: str = "stands"
+
+
+class UpcomingArrivalsMetric(BaseModel):
+    total: int
+    on_time: int
+    delayed: int
+    early: int
+    unit: str = "flights"
+
+
+class ActiveAlertsMetric(BaseModel):
+    critical: int
+    warning: int
+    info: int
+    total: int
+    unit: str = "alerts"
+
+
 class DashboardMetrics(BaseModel):
     on_time_performance: MetricValue
     stand_utilization: MetricValue
     upcoming_arrivals_2h: MetricValue
     plb_usage: MetricValue
+
+
+class FlightStatusMetrics(BaseModel):
+    on_time_performance: OnTimePerformanceMetric
+    stand_utilization: StandUtilizationMetric
+    upcoming_arrivals: UpcomingArrivalsMetric
+    active_alerts: ActiveAlertsMetric
