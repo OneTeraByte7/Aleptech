@@ -158,3 +158,11 @@ class FlightStatusMetrics(BaseModel):
     stand_utilization: StandUtilizationMetric
     upcoming_arrivals: UpcomingArrivalsMetric
     active_alerts: ActiveAlertsMetric
+
+
+class FlightConflict(BaseModel):
+    id: str
+    flight_number: str
+    assigned_stand: str
+    block_time_start: datetime
+    block_time_end: datetime
