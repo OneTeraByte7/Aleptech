@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Query, HTTPException, Path
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 import math
 
 from app.data import FLIGHTS, STANDS, AIRCRAFT_SIZE_ORDER
 from app.models import Flight, PaginatedFlights, PaginationMeta, ReassignRequest
+from app.models import FlightConflict
 
 router = APIRouter(prefix="/flights", tags=["flights"])
 
@@ -225,3 +226,30 @@ def create_flight(flight: Flight):
 
     FLIGHTS.append(entry)
     return parse_flight(entry)
+
+
+@router.get("/{flight_id}/conflicts", response_model=List[FlightConflict])
+def get_flight_conflicts(flight_id: str):
+    """Return list of other flights that overlap on the same stand as the given flight."""
+    flight = get_flight_by_id(flight_id)
+    if not flight:
+        raise HTTPException(status_code=404, detail={"error": "Flight not found", "flight_id": flight_id})
+
+    conflicts = []
+    for f in FLIGHTS:
+        if f["id"] == flight_id:
+            continue
+        if f.get("assigned_stand") != flight.get("assigned_stand"):
+            continue
+        if flights_overlap(flight, f):
+            conflicts.append(
+                FlightConflict(
+                    id=f["id"],
+                    flight_number=f["flight_number"],
+                    assigned_stand=f.get("assigned_stand"),
+                    block_time_start=parse_dt(f["block_time_start"]),
+                    block_time_end=parse_dt(f["block_time_end"]),
+                )
+            )
+
+    return conflicts
