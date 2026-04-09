@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { getFlights } from '../api'
+import { useState, useCallback, useEffect } from 'react'
+import { getFlights, getFlightStatusMetrics, getFlightConflicts } from '../api'
 import { useFetch } from '../hooks/useFetch'
 import { fmtTime, STATUS_META, OP_META } from '../utils'
 import { Badge, OpBadge, LoadingScreen, EmptyState, ErrorBanner } from './ui'
@@ -55,7 +55,7 @@ function FlightRow({ flight, onClick }) {
   )
 }
 
-function FlightDetailPanel({ flight, onClose }) {
+function FlightDetailPanel({ flight, onClose, conflicts, conflictsLoading, conflictsError }) {
   if (!flight) return null
   return (
     <div
@@ -119,6 +119,26 @@ function FlightDetailPanel({ flight, onClose }) {
           <span className="font-mono" style={{ fontSize: 12, color: 'var(--text-primary)' }}>{value}</span>
         </div>
       ))}
+
+      <div style={{ marginTop: 8 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Conflicts</div>
+        {conflictsLoading ? (
+          <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>Checking for conflicts…</div>
+        ) : conflictsError ? (
+          <div className="font-mono" style={{ fontSize: 12, color: 'var(--rose)' }}>Error checking conflicts</div>
+        ) : !conflicts || conflicts.length === 0 ? (
+          <div className="font-mono" style={{ fontSize: 12, color: 'var(--green)' }}>No stand-time conflicts</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {conflicts.map(c => (
+              <div key={c.id} style={{ padding: 8, borderRadius: 6, background: 'rgba(255,243,205,0.6)', border: '1px solid rgba(245,158,11,0.12)' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-primary)', fontFamily: 'DM Sans', fontWeight: 700 }}>{c.flight_number} — {c.assigned_stand}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>{new Date(c.block_time_start).toLocaleString()} → {new Date(c.block_time_end).toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -131,11 +151,21 @@ export default function Dashboard() {
   const [selected, setSelected]   = useState(null)
   const [showFilters, setShowFilters] = useState(false)
 
+  const [conflicts, setConflicts] = useState(null)
+  const [conflictsLoading, setConflictsLoading] = useState(false)
+  const [conflictsError, setConflictsError] = useState(null)
+
   const fetcher = useCallback(
     () => getFlights({ terminal, status, sort: 'scheduled_time', order: 'asc', page, per_page: PER_PAGE }),
     [terminal, status, page]
   )
   const { data, loading, error, refetch } = useFetch(fetcher, [terminal, status, page])
+
+  // Flight status dashboard metrics
+  const { data: metricsData, loading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useFetch(
+    useCallback(() => getFlightStatusMetrics(), []),
+    []
+  )
 
   const flights = data?.data ?? []
   const pagination = data?.pagination ?? {}
@@ -156,6 +186,24 @@ export default function Dashboard() {
     if (key === 'terminal') setTerminal(val)
     if (key === 'status')   setStatus(val)
   }
+
+  // When a flight is selected, fetch any time-overlap conflicts on the same stand
+  useEffect(() => {
+    let cancelled = false
+    if (!selected) {
+      setConflicts(null)
+      setConflictsError(null)
+      setConflictsLoading(false)
+      return
+    }
+    setConflictsLoading(true)
+    setConflictsError(null)
+    getFlightConflicts(selected.id)
+      .then(data => { if (!cancelled) setConflicts(data) })
+      .catch(err => { if (!cancelled) setConflictsError(err) })
+      .finally(() => { if (!cancelled) setConflictsLoading(false) })
+    return () => { cancelled = true }
+  }, [selected])
 
   return (
     <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -252,6 +300,26 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Metrics summary */}
+        <div style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'stretch', flexShrink: 0 }}>
+          {metricsLoading ? (
+            <div style={{ padding: 12, borderRadius: 8, background: 'var(--bg-raised)', border: '1px solid var(--border)', minWidth: 220 }}>
+              <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>Loading metrics…</div>
+            </div>
+          ) : metricsError || !metricsData ? (
+            <div style={{ padding: 12, borderRadius: 8, background: 'var(--bg-raised)', border: '1px solid var(--border)', minWidth: 220 }}>
+              <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>Metrics unavailable</div>
+            </div>
+          ) : (
+            <>
+              <MetricsCard title="On-time Performance" value={`${metricsData.on_time_performance.current}%`} meta={`Prev ${metricsData.on_time_performance.previous}%`} />
+              <MetricsCard title="Stand Utilization" value={`${metricsData.stand_utilization.occupied}/${metricsData.stand_utilization.total}`} meta={`${metricsData.stand_utilization.percentage}%`} />
+              <MetricsCard title="Arrivals (2h)" value={`${metricsData.upcoming_arrivals.total}`} meta={`On-time ${metricsData.upcoming_arrivals.on_time} • Delayed ${metricsData.upcoming_arrivals.delayed}`} />
+              <MetricsCard title="Active Alerts" value={`${metricsData.active_alerts.total}`} meta={`C:${metricsData.active_alerts.critical} W:${metricsData.active_alerts.warning}`} />
+            </>
+          )}
+        </div>
+
         {/* Table */}
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto' }}>
           {loading ? (
@@ -331,7 +399,13 @@ export default function Dashboard() {
 
       {/* Detail panel */}
       {selected && (
-        <FlightDetailPanel flight={selected} onClose={() => setSelected(null)} />
+        <FlightDetailPanel
+          flight={selected}
+          onClose={() => setSelected(null)}
+          conflicts={conflicts}
+          conflictsLoading={conflictsLoading}
+          conflictsError={conflictsError}
+        />
       )}
     </div>
   )
@@ -369,4 +443,23 @@ function pageBtnStyle(disabled) {
     opacity: disabled ? 0.4 : 1,
     transition: 'all 0.12s',
   }
+}
+
+function MetricsCard({ title, value, meta }) {
+  return (
+    <div style={{
+      padding: 12,
+      borderRadius: 8,
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      minWidth: 220,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 6,
+    }}>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>{title}</div>
+      <div style={{ fontSize: 20, color: 'var(--text-primary)', fontFamily: 'DM Sans', fontWeight: 700 }}>{value}</div>
+      {meta && <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono' }}>{meta}</div>}
+    </div>
+  )
 }
