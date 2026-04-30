@@ -2,6 +2,16 @@
 
 Comprehensive full-stack airport operations demo with a FastAPI backend and a React + Vite frontend. This repository demonstrates flight scheduling, stand/stand assignment timeline, an operations chat interface, and an airport resource graph — including several bonus features.
 
+---
+
+![Hired](https://img.shields.io/badge/Hired-Yes-success?style=for-the-badge&logo=handshake)
+![Role](https://img.shields.io/badge/Role-SDE%20Intern-blue?style=for-the-badge&logo=code)
+![Domain](https://img.shields.io/badge/Domain-ML-purple?style=for-the-badge&logo=tensorflow)
+![Year](https://img.shields.io/badge/Year-2026-orange?style=for-the-badge&logo=calendar)
+![Status](https://img.shields.io/badge/Status-Done-brightgreen?style=for-the-badge&logo=checkmarx)
+
+---
+
 ## Introduction
 
 Aleph Airport is a focused take-home project that simulates critical airport operations: flight listing and reassignment, visual stand timelines, an operations chat interface, and an interactive resource graph. It is intended as a production-capable prototype that is easy to extend and deploy.
